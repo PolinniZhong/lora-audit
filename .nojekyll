@@ -1,1 +1,2 @@
-
+Jekyll 会忽略以 _ 开头的目录（如 _lora_audit/），而示例报告正落在那里。
+加这个文件让 GitHub Pages 原样服务所有文件。
