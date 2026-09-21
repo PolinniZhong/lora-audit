@@ -5,6 +5,15 @@
 
 ## [Unreleased]
 
+### Added
+- `examples/demo-dataset/`：13 张自制合成图 + caption，随仓库分发（**不含任何第三方素材**）
+- **可点开看的真实报告**（GitHub Pages）：`examples/demo-dataset/_lora_audit/report.html`
+- `tools/make_demo_report.sh`：示例报告的可复现生成脚本
+
+### Fixed
+- `.nojekyll`：GitHub Pages 的 Jekyll 会忽略 `_` 开头的目录（报告落在 `_lora_audit/`），没有它会 404
+- `docs/screenshot.png` 重拍：原图右上角印有开发机的**绝对路径**（含用户名与内部目录）
+
 暂无。
 
 ## [0.1.0] - 2026-09-20
@@ -78,5 +87,5 @@
 - `W008` 在**有意分桶**时是噪声，没有"我已知晓，别报"的抑制机制
 - **只在 1 个真实第三方公开数据集上验证过**（9 张、零 caption、`.png` 实为 WebP）＋ 15 个按训练器官方约定构造的布局夹具；还没经受「大量真实目录」的考验
 
-[Unreleased]: https://github.com/OWNER/lora-audit/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/OWNER/lora-audit/releases/tag/v0.1.0
+[Unreleased]: https://github.com/PolinniZhong/lora-audit/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/PolinniZhong/lora-audit/releases/tag/v0.1.0
