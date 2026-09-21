@@ -1,0 +1,24 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+
+# 审计产物默认落在数据集内的 _lora_audit/，不要提交
+_lora_audit/
+
+# 验收体验用的临时报告与清单
+_acceptance/
+
+# 示例数据集是生成的
+examples/demo-dataset/
+
+# macOS / Windows 杂物（本工具会主动报这类文件）
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 浏览器实测用的临时 Chrome profile
+.chrome-profile/

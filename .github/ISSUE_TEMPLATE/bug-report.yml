@@ -1,0 +1,59 @@
+name: 误报 / 漏报
+description: 某条规则报错了不该报的，或该报的没报出来
+title: "[规则] "
+labels: ["rules"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        规则类的 issue 最有价值的是**可复现的目录结构**。不用附带图片内容，
+        给文件树 + caption 文本就够了。
+  - type: input
+    id: rule
+    attributes:
+      label: 规则编号
+      description: 报告页每条问题左上角那个 ID，例如 W002。漏报就写你认为该触发的规则。
+      placeholder: W002
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: 类型
+      options:
+        - 误报（不该报却报了）
+        - 漏报（该报却没报）
+    validations:
+      required: true
+  - type: textarea
+    id: tree
+    attributes:
+      label: 目录结构
+      description: 用 `tree` 或手写都行，标出问题涉及的那几个文件。
+      render: text
+      placeholder: |
+        dataset/
+        ├── 001_front.png
+        ├── 001_front.txt
+        └── 002_front.png      ← 没有 caption，但没被报出来
+    validations:
+      required: true
+  - type: textarea
+    id: captions
+    attributes:
+      label: 相关 caption 原文
+      render: text
+  - type: input
+    id: version
+    attributes:
+      label: lora-audit 版本
+      description: 跑 `lora-audit --version`
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: 系统与 Python 版本
+      placeholder: macOS 15 / Python 3.12.4
+    validations:
+      required: true

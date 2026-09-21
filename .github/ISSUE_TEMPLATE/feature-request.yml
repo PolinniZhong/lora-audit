@@ -1,0 +1,34 @@
+name: 建议 / 新规则
+description: 提一个它没检查但值得检查的问题
+title: "[建议] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        提新规则前先想一件事：**这个问题能不能一眼验证？**
+        只报能一眼验证的事，是为了让告警保持可信——噪声一多，用户就不看了。
+  - type: textarea
+    id: problem
+    attributes:
+      label: 你遇到过什么问题
+      description: 具体到"我当时看到的现象"和"最后发现的原因"。
+    validations:
+      required: true
+  - type: textarea
+    id: detect
+    attributes:
+      label: 怎么从文件本身判断出来
+      description: 不需要读图内容就能判断吗？如果需要模型判断，那多半不该做成规则。
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: 你希望它是
+      options:
+        - 错误（会让训练真的出问题）
+        - 警告（很可能有问题，但可能是有意为之）
+        - 只是信息
+    validations:
+      required: true
