@@ -21,7 +21,7 @@
 
 ![审计报告截图](docs/screenshot.png)
 
-**[▶ 点开看一份真实报告（本仓库自带示例，双击即开）](examples/demo-dataset/_lora_audit/report.html)**
+**[▶ 点开看一份真实报告（本仓库自带示例，双击即开）](https://polinnizhong.github.io/lora-audit/examples/demo-dataset/_lora_audit/report.html)**
 
 > 那份报告是对 `examples/demo-dataset/` 这个 13 张图的合成数据集跑出来的真产物。
 > 你也可以自己跑：`lora-audit scan examples/demo-dataset`
