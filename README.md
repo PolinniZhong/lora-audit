@@ -24,7 +24,8 @@
 ## 30 秒上手
 
 ```bash
-pip install lora-audit
+# PyPI 尚未发布，先用 git 安装（PyPI 版随后），
+pip install git+https://github.com/PolinniZhong/lora-audit.git
 
 lora-audit scan ./dataset          # → ./dataset/_lora_audit/report.html
 lora-audit scan ./dataset --open   # 顺手打开

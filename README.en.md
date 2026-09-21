@@ -27,7 +27,8 @@ file you double-click**.
 ## Quickstart
 
 ```bash
-pip install lora-audit
+# Not on PyPI yet — install from git for now,
+pip install git+https://github.com/PolinniZhong/lora-audit.git
 
 lora-audit scan ./dataset          # → ./dataset/_lora_audit/report.html
 lora-audit scan ./dataset --open
