@@ -1,0 +1,999 @@
+<!doctype html>
+<html lang="zh-CN" data-alc-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#0D0F13">
+<meta name="generator" content="lora-audit 0.1.0">
+<meta name="robots" content="noindex, nofollow">
+<!-- data: 空图标：避免 Chrome 为 file:// 页面去请求 favicon.ico 而在控制台留下一条
+     ERR_FILE_NOT_FOUND —— 那条噪声会掩盖真正该看的问题 -->
+<link rel="icon" href="data:,">
+<title>demo-dataset · 训练集审计</title>
+<style>
+/* ============================================================================
+   lora-audit · 报告页样式（冻结子集）
+   ----------------------------------------------------------------------------
+   令牌层（--alc-*）与部分组件（topbar / 抽屉 / 按钮 / 焦点环）**复制冻结**自
+   另一套已在生产里用过的前端：不共享依赖、不带运行时耦合，
+   本包的迭代节奏不应该被上游前端拖住。
+   规则：组件里不写死颜色，只引用令牌；换主题只改两块 :root。
+   ========================================================================== */
+
+:root {
+  color-scheme: dark;
+
+  /* A. 灰阶 12 步 */
+  --alc-gray-1:  #0D0F13;
+  --alc-gray-2:  #13161B;
+  --alc-gray-3:  #1A1E25;
+  --alc-gray-4:  #21262F;
+  --alc-gray-5:  #282E39;
+  --alc-gray-6:  #313845;
+  --alc-gray-7:  #3D4554;
+  --alc-gray-8:  #545D70;
+  --alc-gray-9:  #6B7488;
+  --alc-gray-10: #8C95A8;
+  --alc-gray-11: #9BA5B4;
+  --alc-gray-12: #EDF1F7;
+
+  /* B. 语义别名（组件只用这些） */
+  --alc-bg-canvas: var(--alc-gray-1);
+  --alc-bg-base: var(--alc-gray-1);
+  --alc-bg-surface: var(--alc-gray-3);
+  --alc-bg-elevated: var(--alc-gray-4);
+  --alc-bg-inset: var(--alc-gray-2);
+  --alc-fg-primary: var(--alc-gray-12);
+  --alc-fg-secondary: var(--alc-gray-11);
+  --alc-fg-tertiary: var(--alc-gray-10);
+  --alc-border-subtle: var(--alc-gray-6);
+  --alc-border-default: var(--alc-gray-7);
+  --alc-border-strong: var(--alc-gray-8);
+  --alc-scrim: rgba(0, 0, 0, 0.28);
+  --alc-media-black: #000000;
+
+  --alc-brand-primary: #4F9DFF;
+  --alc-brand-hover: #74B3FF;
+  --alc-brand-bg: rgba(79, 157, 255, 0.10);
+  --alc-brand-hover-bg: rgba(79, 157, 255, 0.24);
+
+  --alc-state-success: #34D399;
+  --alc-state-success-bg: rgba(52, 211, 153, 0.12);
+  --alc-state-success-border: rgba(52, 211, 153, 0.30);
+  --alc-state-warn: #FBBF24;
+  --alc-state-warn-bg: rgba(251, 191, 36, 0.12);
+  --alc-state-warn-border: rgba(251, 191, 36, 0.30);
+  --alc-state-error: #F87171;
+  --alc-state-error-bg: rgba(248, 113, 113, 0.12);
+  --alc-state-error-border: rgba(248, 113, 113, 0.30);
+  --alc-state-info: #60A5FA;
+  --alc-state-info-bg: rgba(96, 165, 250, 0.12);
+  --alc-state-info-border: rgba(96, 165, 250, 0.30);
+
+  --alc-media-mat: #FFFFFF;
+
+  --alc-font-sans: ui-sans-serif, system-ui, -apple-system, "PingFang SC", "Hiragino Sans GB", "Segoe UI", Roboto, Arial, sans-serif;
+  --alc-font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+
+  --alc-fs-xl: 18px;
+  --alc-fs-lg: 15px;
+  --alc-fs-md: 14px;
+  --alc-fs-base: 13px;
+  --alc-fs-sm: 12px;
+  --alc-fs-xs: 11px;
+
+  --alc-fw-regular: 400;
+  --alc-fw-medium: 500;
+  --alc-fw-semibold: 600;
+
+  --alc-lh-tight: 1.3;
+  --alc-lh-snug: 1.45;
+  --alc-lh-normal: 1.6;
+
+  --alc-sp-1: 4px;  --alc-sp-2: 6px;  --alc-sp-3: 8px;
+  --alc-sp-4: 10px; --alc-sp-5: 12px; --alc-sp-6: 14px;
+  --alc-sp-7: 16px; --alc-sp-8: 20px; --alc-sp-9: 24px;
+
+  --alc-r-1: 6px; --alc-r-2: 7px; --alc-r-3: 8px;
+  --alc-r-4: 9px; --alc-r-5: 10px; --alc-r-6: 12px; --alc-r-pill: 999px;
+
+  --alc-shadow-2: 0 1px 2px rgba(0, 0, 0, 0.30), 0 2px 6px rgba(0, 0, 0, 0.22);
+  --alc-shadow-3: 0 1px 2px rgba(0, 0, 0, 0.32), 0 4px 14px rgba(0, 0, 0, 0.26);
+  --alc-shadow-5: 0 4px 10px rgba(0, 0, 0, 0.40), 0 16px 48px rgba(0, 0, 0, 0.36);
+  --alc-hairline-top: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+  --alc-shadow-card: var(--alc-shadow-2), var(--alc-hairline-top);
+  --alc-shadow-hover: var(--alc-shadow-3), var(--alc-hairline-top);
+  --alc-shadow-pop: var(--alc-shadow-5);
+  --alc-focus-ring: 0 0 0 3px rgba(79, 157, 255, 0.22);
+
+  --alc-dur-fast: 150ms;
+  --alc-dur-base: 200ms;
+  --alc-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --alc-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --la-sticky-h: 148px;
+}
+
+:root[data-alc-theme="light"] {
+  color-scheme: light;
+
+  --alc-gray-1:  #FFFFFF;
+  --alc-gray-2:  #F6F7F9;
+  --alc-gray-3:  #FFFFFF;
+  --alc-gray-4:  #F1F3F6;
+  --alc-gray-5:  #E9ECF1;
+  --alc-gray-6:  #E4E7ED;
+  --alc-gray-7:  #D3D8E0;
+  --alc-gray-8:  #A8B1C0;
+  --alc-gray-9:  #6B7488;
+  --alc-gray-10: #5A6274;
+  --alc-gray-11: #4E5566;
+  --alc-gray-12: #171A20;
+
+  --alc-brand-primary: #1D63CC;
+  --alc-brand-hover: #1751AC;
+  --alc-brand-bg: rgba(29, 99, 204, 0.10);
+  --alc-brand-hover-bg: rgba(29, 99, 204, 0.22);
+
+  --alc-state-success: #0F7A4A;
+  --alc-state-success-bg: rgba(15, 122, 74, 0.10);
+  --alc-state-success-border: rgba(15, 122, 74, 0.30);
+  --alc-state-warn: #8A5200;
+  --alc-state-warn-bg: rgba(138, 82, 0, 0.10);
+  --alc-state-warn-border: rgba(138, 82, 0, 0.30);
+  --alc-state-error: #B3261E;
+  --alc-state-error-bg: rgba(179, 38, 30, 0.10);
+  --alc-state-error-border: rgba(179, 38, 30, 0.30);
+  --alc-state-info: #1D63CC;
+  --alc-state-info-bg: rgba(29, 99, 204, 0.10);
+  --alc-state-info-border: rgba(29, 99, 204, 0.30);
+
+  --alc-shadow-2: 0 1px 2px rgba(0, 0, 0, 0.05), 0 2px 6px rgba(0, 0, 0, 0.05);
+  --alc-shadow-3: 0 1px 2px rgba(0, 0, 0, 0.06), 0 4px 14px rgba(0, 0, 0, 0.07);
+  --alc-shadow-5: 0 4px 10px rgba(0, 0, 0, 0.08), 0 16px 48px rgba(0, 0, 0, 0.10);
+  --alc-hairline-top: inset 0 1px 0 rgba(255, 255, 255, 0);
+  --alc-shadow-card: none;
+  --alc-shadow-hover: var(--alc-shadow-3), var(--alc-hairline-top);
+  --alc-focus-ring: 0 0 0 3px rgba(29, 99, 204, 0.18);
+}
+
+/* ------------------------------------------------------------------ 基础 */
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+button, a, input, summary { touch-action: manipulation; }
+body {
+  margin: 0;
+  background: var(--alc-bg-canvas);
+  color: var(--alc-fg-primary);
+  font: var(--alc-fw-regular) var(--alc-fs-base)/var(--alc-lh-normal) var(--alc-font-sans);
+}
+a { color: var(--alc-brand-primary); text-decoration: none; }
+a:hover { text-decoration: underline; }
+:focus-visible {
+  outline: none;
+  box-shadow: var(--alc-focus-ring);
+  border-radius: var(--alc-r-2);
+}
+button:focus-visible, input:focus-visible, a:focus-visible { scroll-margin-top: var(--la-sticky-h); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+.alc-skip {
+  position: absolute; left: var(--alc-sp-7); top: -100px; z-index: 60;
+  background: var(--alc-bg-elevated); color: var(--alc-fg-primary);
+  border: 1px solid var(--alc-border-strong); border-radius: var(--alc-r-3);
+  padding: var(--alc-sp-4) var(--alc-sp-6); font-size: var(--alc-fs-sm);
+  transition: top var(--alc-dur-fast) var(--alc-ease);
+}
+.alc-skip:focus { top: var(--alc-sp-7); text-decoration: none; }
+
+.alc-app { min-height: 100vh; display: flex; flex-direction: column; }
+
+/* ------------------------------------------------- 顶栏（唯一粘滞层） */
+.alc-topbar {
+  position: sticky; top: 0; z-index: 20;
+  background: var(--alc-bg-canvas);
+  border-bottom: 1px solid var(--alc-border-default);
+}
+.alc-head {
+  background: var(--alc-bg-base);
+  padding: var(--alc-sp-5) var(--alc-sp-9);
+}
+.alc-head-main { display: flex; align-items: center; justify-content: space-between; gap: var(--alc-sp-5); }
+.alc-brand {
+  margin: 0;
+  font-size: var(--alc-fs-lg); font-weight: var(--alc-fw-semibold);
+  letter-spacing: 0.01em; display: inline-flex; align-items: center; gap: var(--alc-sp-3);
+  min-width: 0;
+}
+.alc-brand-mark {
+  width: 9px; height: 9px; border-radius: var(--alc-r-pill);
+  background: var(--alc-brand-primary); flex: none;
+}
+.alc-head-right { display: flex; align-items: center; gap: var(--alc-sp-5); min-width: 0; }
+.alc-head-meta {
+  font-size: var(--alc-fs-sm); color: var(--alc-fg-tertiary);
+  font-family: var(--alc-font-mono);
+  max-width: 46vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  direction: rtl; text-align: left;
+}
+.alc-icon-btn {
+  background: transparent; border: 1px solid transparent; color: var(--alc-fg-secondary);
+  border-radius: var(--alc-r-2); width: 26px; height: 26px; cursor: pointer;
+  font-size: var(--alc-fs-md); line-height: 1; display: inline-flex;
+  align-items: center; justify-content: center; flex: none;
+  transition: background var(--alc-dur-fast) var(--alc-ease);
+}
+.alc-icon-btn:hover { background: var(--alc-bg-elevated); color: var(--alc-fg-primary); }
+
+.alc-metabar, .alc-toolbar {
+  display: flex; align-items: center; gap: var(--alc-sp-3);
+  padding: var(--alc-sp-3) var(--alc-sp-9);
+  border-top: 1px solid var(--alc-border-subtle);
+  background: var(--alc-bg-canvas);
+  flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none;
+}
+.alc-toolbar { flex-wrap: wrap; overflow: visible; }
+.alc-metabar::-webkit-scrollbar { display: none; }
+
+/* 摘要芯片 */
+.la-chips { display: flex; align-items: center; gap: var(--alc-sp-2); flex-wrap: nowrap; }
+.la-chip {
+  display: inline-flex; align-items: center; gap: var(--alc-sp-2);
+  padding: var(--alc-sp-1) var(--alc-sp-4);
+  border: 1px solid var(--alc-border-subtle); border-radius: var(--alc-r-pill);
+  background: var(--alc-bg-inset); color: var(--alc-fg-secondary);
+  font-size: var(--alc-fs-sm); white-space: nowrap;
+}
+.la-chip b { color: var(--alc-fg-primary); font-weight: var(--alc-fw-semibold); font-variant-numeric: tabular-nums; }
+.la-chip.is-error { background: var(--alc-state-error-bg); border-color: var(--alc-state-error-border); color: var(--alc-state-error); }
+.la-chip.is-error b { color: var(--alc-state-error); }
+.la-chip.is-warn { background: var(--alc-state-warn-bg); border-color: var(--alc-state-warn-border); color: var(--alc-state-warn); }
+.la-chip.is-warn b { color: var(--alc-state-warn); }
+.la-chip.is-ok { background: var(--alc-state-success-bg); border-color: var(--alc-state-success-border); color: var(--alc-state-success); }
+.la-chip.is-ok b { color: var(--alc-state-success); }
+
+/* 搜索 */
+.la-search { position: relative; flex: 1 1 220px; min-width: 180px; }
+.la-search input {
+  width: 100%; padding: var(--alc-sp-2) var(--alc-sp-8) var(--alc-sp-2) var(--alc-sp-5);
+  background: var(--alc-bg-inset); color: var(--alc-fg-primary);
+  border: 1px solid var(--alc-border-subtle); border-radius: var(--alc-r-3);
+  font: inherit; font-size: var(--alc-fs-sm);
+}
+.la-search input::placeholder { color: var(--alc-fg-tertiary); }
+.la-search::after {
+  content: "⌕"; position: absolute; right: var(--alc-sp-4); top: 50%;
+  transform: translateY(-50%); color: var(--alc-fg-tertiary);
+  font-size: var(--alc-fs-md); pointer-events: none;
+}
+
+/* 筛选按钮 */
+.la-filters { display: flex; align-items: center; gap: var(--alc-sp-2); flex-wrap: wrap; }
+.alc-btn {
+  display: inline-flex; align-items: center; gap: var(--alc-sp-2);
+  padding: var(--alc-sp-2) var(--alc-sp-5);
+  background: var(--alc-bg-inset); color: var(--alc-fg-secondary);
+  border: 1px solid var(--alc-border-subtle); border-radius: var(--alc-r-pill);
+  font: inherit; font-size: var(--alc-fs-sm); cursor: pointer;
+  transition: background var(--alc-dur-fast) var(--alc-ease), border-color var(--alc-dur-fast) var(--alc-ease), color var(--alc-dur-fast) var(--alc-ease);
+}
+.alc-btn:hover { border-color: var(--alc-border-strong); color: var(--alc-fg-primary); }
+.alc-btn[aria-pressed="true"] {
+  background: var(--alc-brand-bg); border-color: var(--alc-border-strong);
+  color: var(--alc-fg-primary);
+}
+.alc-btn .la-dot { width: 7px; height: 7px; border-radius: var(--alc-r-pill); background: currentColor; flex: none; }
+.alc-btn.is-error { color: var(--alc-state-error); }
+.alc-btn.is-warn { color: var(--alc-state-warn); }
+.alc-btn.is-info { color: var(--alc-state-info); }
+
+/* ----------------------------------------------------------------- 主体 */
+.alc-main { flex: 1 0 auto; padding: var(--alc-sp-9); max-width: 1500px; width: 100%; margin: 0 auto; }
+.la-section + .la-section { margin-top: var(--alc-sp-9); }
+.la-h2 {
+  margin: 0 0 var(--alc-sp-5);
+  font-size: var(--alc-fs-md); font-weight: var(--alc-fw-semibold);
+  display: flex; align-items: baseline; gap: var(--alc-sp-4);
+}
+.la-h2-note { font-size: var(--alc-fs-sm); font-weight: var(--alc-fw-regular); color: var(--alc-fg-tertiary); }
+
+/* 检查结果卡片。多列而不是单列长条：问题多的时候（真实数据集十几条很常见），
+   单列会把图片区推到几千像素之下，用户第一屏就看不到自己的图。 */
+.la-findings { display: grid; gap: var(--alc-sp-4); grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); align-items: start; }
+.la-finding {
+  background: var(--alc-bg-surface);
+  border: 1px solid var(--alc-border-subtle);
+  border-left: 3px solid var(--alc-border-default);
+  border-radius: var(--alc-r-4);
+  padding: var(--alc-sp-6);
+  box-shadow: var(--alc-shadow-card);
+  transition: border-color var(--alc-dur-fast) var(--alc-ease);
+}
+.la-finding:hover { border-color: var(--alc-border-strong); }
+.la-finding.sev-error { border-left-color: var(--alc-state-error); }
+.la-finding.sev-warn { border-left-color: var(--alc-state-warn); }
+.la-finding.sev-info { border-left-color: var(--alc-state-info); }
+.la-finding.is-ok { border-left-color: var(--alc-state-success); }
+
+.la-f-head { display: flex; align-items: center; gap: var(--alc-sp-3); flex-wrap: wrap; }
+.la-f-id {
+  font-family: var(--alc-font-mono); font-size: var(--alc-fs-xs);
+  padding: 1px var(--alc-sp-2); border-radius: var(--alc-r-1);
+  background: var(--alc-bg-inset); color: var(--alc-fg-tertiary);
+  border: 1px solid var(--alc-border-subtle);
+}
+.la-f-title { font-weight: var(--alc-fw-semibold); font-size: var(--alc-fs-base); }
+.sev-error .la-f-title { color: var(--alc-state-error); }
+.sev-warn .la-f-title { color: var(--alc-state-warn); }
+.sev-info .la-f-title { color: var(--alc-state-info); }
+.la-f-count {
+  margin-left: auto; font-size: var(--alc-fs-sm); color: var(--alc-fg-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+.la-f-detail { margin: var(--alc-sp-4) 0 0; color: var(--alc-fg-secondary); line-height: var(--alc-lh-snug); }
+.la-f-action {
+  margin: var(--alc-sp-4) 0 0; padding-left: var(--alc-sp-5);
+  border-left: 2px solid var(--alc-border-subtle);
+  color: var(--alc-fg-tertiary); font-size: var(--alc-fs-sm);
+}
+.la-f-action::before { content: "怎么办 · "; color: var(--alc-fg-secondary); }
+.la-f-links { margin-top: var(--alc-sp-4); display: flex; gap: var(--alc-sp-2); flex-wrap: wrap; }
+.la-f-links .alc-btn { font-size: var(--alc-fs-xs); padding: 3px var(--alc-sp-4); }
+.la-f-more-box { margin-top: var(--alc-sp-4); font-size: var(--alc-fs-xs); }
+.la-f-more-box summary { cursor: pointer; color: var(--alc-fg-secondary); }
+.la-f-files {
+  margin: var(--alc-sp-3) 0 0; padding-left: var(--alc-sp-6);
+  color: var(--alc-fg-tertiary); font-family: var(--alc-font-mono);
+  max-height: 180px; overflow: auto;
+}
+.la-f-files li { word-break: break-all; }
+.la-f-more { color: var(--alc-fg-tertiary); font-style: italic; }
+code {
+  font-family: var(--alc-font-mono); font-size: 0.94em;
+  background: var(--alc-bg-inset); border: 1px solid var(--alc-border-subtle);
+  border-radius: var(--alc-r-1); padding: 0 4px;
+}
+
+/* ----------------------------------------------------------------- 网格 */
+.la-grid {
+  display: grid; gap: var(--alc-sp-5);
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+}
+.la-tile {
+  background: var(--alc-bg-surface);
+  border: 1px solid var(--alc-border-subtle);
+  border-radius: var(--alc-r-4);
+  overflow: hidden; cursor: pointer; padding: 0; text-align: left;
+  color: inherit; font: inherit;
+  box-shadow: var(--alc-shadow-card);
+  transition: border-color var(--alc-dur-fast) var(--alc-ease), box-shadow var(--alc-dur-fast) var(--alc-ease);
+  display: flex; flex-direction: column;
+}
+.la-tile:hover { border-color: var(--alc-border-strong); box-shadow: var(--alc-shadow-hover); }
+.la-frame {
+  /* 白底资产衬底：白图不会糊进浅色页面背景 */
+  background: var(--alc-media-mat);
+  border-bottom: 1px solid var(--alc-border-subtle);
+  aspect-ratio: 3 / 4; display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+.la-frame img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.la-tile-body { padding: var(--alc-sp-3) var(--alc-sp-4) var(--alc-sp-4); }
+.la-tile-name {
+  font-family: var(--alc-font-mono); font-size: var(--alc-fs-xs);
+  color: var(--alc-fg-secondary);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.la-tile-cap {
+  margin-top: 3px; font-size: var(--alc-fs-xs); color: var(--alc-fg-tertiary);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden; line-height: 1.4; min-height: 2.8em;
+}
+.la-tile-badges { margin-top: var(--alc-sp-2); display: flex; gap: 3px; flex-wrap: wrap; }
+.la-badge {
+  font-size: 10px; font-family: var(--alc-font-mono); line-height: 1.6;
+  padding: 0 5px; border-radius: var(--alc-r-1);
+  border: 1px solid var(--alc-border-subtle); color: var(--alc-fg-tertiary);
+}
+.la-badge.e { color: var(--alc-state-error); border-color: var(--alc-state-error-border); background: var(--alc-state-error-bg); }
+.la-badge.w { color: var(--alc-state-warn); border-color: var(--alc-state-warn-border); background: var(--alc-state-warn-bg); }
+.la-badge.none { color: var(--alc-state-error); border-color: var(--alc-state-error-border); background: var(--alc-state-error-bg); }
+
+.la-empty { color: var(--alc-fg-tertiary); font-size: var(--alc-fs-sm); }
+.la-done { display: flex; align-items: center; gap: var(--alc-sp-3); color: var(--alc-state-success); }
+
+/* ----------------------------------------------------------------- 页脚 */
+.alc-foot {
+  border-top: 1px solid var(--alc-border-subtle);
+  padding: var(--alc-sp-7) var(--alc-sp-9);
+  color: var(--alc-fg-tertiary); font-size: var(--alc-fs-sm);
+  display: flex; flex-direction: column; gap: var(--alc-sp-2);
+}
+.alc-foot-hint { color: var(--alc-fg-tertiary); opacity: 0.85; }
+
+/* ------------------------------------------------------------ 抽屉 / 灯箱 */
+.alc-drawer {
+  position: fixed; inset: 0; z-index: 40;
+  background: var(--alc-scrim);
+  display: flex; justify-content: flex-end;
+  overscroll-behavior: contain;
+}
+.alc-drawer[hidden], .alc-lightbox[hidden] { display: none; }
+.alc-drawer-panel {
+  width: min(520px, 92vw); height: 100%;
+  background: var(--alc-bg-surface);
+  border-left: 1px solid var(--alc-border-default);
+  box-shadow: var(--alc-shadow-pop);
+  display: flex; flex-direction: column;
+}
+.alc-drawer-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: var(--alc-sp-6) var(--alc-sp-8);
+  border-bottom: 1px solid var(--alc-border-subtle);
+}
+.alc-drawer-title { font-size: var(--alc-fs-md); font-weight: var(--alc-fw-semibold); }
+.alc-drawer-body { padding: var(--alc-sp-8); overflow: auto; }
+.la-kv { display: grid; grid-template-columns: 78px 1fr; gap: var(--alc-sp-3) var(--alc-sp-5); font-size: var(--alc-fs-sm); }
+.la-kv dt { color: var(--alc-fg-tertiary); }
+.la-kv dd { margin: 0; color: var(--alc-fg-primary); word-break: break-all; }
+.la-cap-box {
+  margin-top: var(--alc-sp-7); padding: var(--alc-sp-5);
+  background: var(--alc-bg-inset); border: 1px solid var(--alc-border-subtle);
+  border-radius: var(--alc-r-3); font-size: var(--alc-fs-sm);
+  line-height: var(--alc-lh-snug); white-space: pre-wrap; word-break: break-word;
+  max-height: 46vh; overflow: auto;
+}
+.la-cap-box.is-empty { color: var(--alc-state-error); font-style: italic; }
+.la-drawer-actions { margin-top: var(--alc-sp-6); display: flex; gap: var(--alc-sp-3); flex-wrap: wrap; }
+.la-preview { margin-top: var(--alc-sp-7); }
+.la-preview img { width: 100%; border-radius: var(--alc-r-3); border: 1px solid var(--alc-border-subtle); background: var(--alc-media-mat); }
+
+.alc-lightbox {
+  position: fixed; inset: 0; z-index: 50;
+  background: rgba(6, 8, 11, 0.92);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--alc-sp-5); padding: var(--alc-sp-9);
+  overscroll-behavior: contain;
+}
+.alc-lightbox img {
+  max-width: 94vw; max-height: 82vh; object-fit: contain;
+  background: var(--alc-media-mat); border-radius: var(--alc-r-3);
+}
+.alc-lb-close { position: fixed; top: var(--alc-sp-7); right: var(--alc-sp-7); color: #EDF1F7; }
+.alc-lb-cap {
+  color: #9BA5B4; font-size: var(--alc-fs-sm); max-width: 900px; text-align: center;
+  max-height: 12vh; overflow: auto;
+}
+
+/* --------------------------------------------------------------- 响应式 */
+@media (max-width: 720px) {
+  .alc-head, .alc-metabar, .alc-toolbar, .alc-main, .alc-foot { padding-left: var(--alc-sp-6); padding-right: var(--alc-sp-6); }
+  .alc-head-meta { display: none; }
+  .la-grid { grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: var(--alc-sp-4); }
+  .la-kv { grid-template-columns: 1fr; gap: var(--alc-sp-1) 0; }
+  .la-kv dt { margin-top: var(--alc-sp-4); }
+}
+
+</style>
+</head>
+<body>
+<a class="alc-skip" href="#la-main">跳到主内容</a>
+<div class="alc-app">
+  <div class="alc-topbar">
+    <header class="alc-head">
+      <div class="alc-head-main">
+        <h1 class="alc-brand">
+          <span class="alc-brand-mark" aria-hidden="true"></span>
+          <span data-bind="title"></span>
+        </h1>
+        <div class="alc-head-right">
+          <span class="alc-head-meta" data-bind="root"></span>
+          <button class="alc-icon-btn" type="button" id="la-theme" title="切换深浅色"
+                  aria-label="切换深浅色">◐</button>
+        </div>
+      </div>
+    </header>
+    <div class="alc-metabar">
+      <div class="la-chips" data-bind="summary" role="list"></div>
+    </div>
+    <div class="alc-toolbar">
+      <div class="la-search">
+        <input type="search" id="la-q" placeholder="搜文件名或 caption…"
+               aria-label="搜索文件名或 caption" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="la-filters" data-bind="filters" role="group" aria-label="按问题筛选"></div>
+    </div>
+  </div>
+
+  <main id="la-main" class="alc-main">
+    <section class="la-section" aria-labelledby="la-findings-h">
+      <h2 id="la-findings-h" class="la-h2">检查结果 <span class="la-h2-note" data-bind="finding-count"></span></h2>
+      <div class="la-findings" data-bind="findings"></div>
+    </section>
+
+    <section class="la-section" aria-labelledby="la-grid-h">
+      <h2 id="la-grid-h" class="la-h2">图片 <span class="la-h2-note" data-bind="grid-count"></span></h2>
+      <div class="la-grid" data-bind="grid"></div>
+      <p class="la-empty" data-bind="empty" hidden>没有匹配的图片。</p>
+    </section>
+  </main>
+
+  <footer class="alc-foot">
+    <span>由 <strong>lora-audit 0.1.0</strong> 生成于 <span data-bind="generated"></span> · 只读页面，不会修改你的数据集</span>
+    <span class="alc-foot-hint">图片按相对路径引用：移动本报告时请与数据集一起移动，否则会断图</span>
+  </footer>
+</div>
+
+<div class="alc-drawer" id="la-drawer" hidden>
+  <div class="alc-drawer-panel" role="dialog" aria-modal="true" aria-labelledby="la-drawer-title">
+    <div class="alc-drawer-head">
+      <span class="alc-drawer-title" id="la-drawer-title">图片详情</span>
+      <button class="alc-icon-btn" type="button" data-close="drawer" aria-label="关闭">✕</button>
+    </div>
+    <div class="alc-drawer-body" data-bind="drawer-body"></div>
+  </div>
+</div>
+
+<div class="alc-lightbox" id="la-lightbox" hidden>
+  <button class="alc-icon-btn alc-lb-close" type="button" data-close="lightbox" aria-label="关闭">✕</button>
+  <img alt="" data-bind="lb-img">
+  <div class="alc-lb-cap" data-bind="lb-cap"></div>
+</div>
+
+<script type="application/json" id="la-data">{"tool":"lora-audit","version":"0.1.0","generated":"2026-09-21 10:50:26","title":"demo-dataset · 训练集审计","dataset":{"root":"examples/demo-dataset","name":"demo-dataset"},"summary":{"images":13,"sidecar":11,"default":1,"none":1,"empty":1,"groups":1,"bytes":85842,"errors":1,"warnings":11,"infos":3},"layout":["图片既有平铺的、也有放在子目录里的（混合布局）","检测到 1 个 default_caption.txt"],"trigger":{"value":"demochan","coverage":0.9091,"counts":{"demochan":10,"demochar":1},"total":11},"ignored":{},"groups":[{"name":"extra","count":1}],"meta":[{"rel":"extra/default_caption.txt","role":"default_caption","lines":[],"note":"身份块/兜底 caption"}],"images":[{"rel":"001_front.png","name":"001_front.png","ext":".png","group":"","bytes":7090,"w":1024,"h":1365,"fmt":"png","capSource":"sidecar","caption":"demochan, full body, front view, neutral A-pose","captionRel":"001_front.txt","trigger":"demochan","src":"../001_front.png","findings":["W002"]},{"rel":"002_side.png","name":"002_side.png","ext":".png","group":"","bytes":7090,"w":1024,"h":1365,"fmt":"png","capSource":"sidecar","caption":"demochan, full body, side view, neutral A-pose","captionRel":"002_side.txt","trigger":"demochan","src":"../002_side.png","findings":[]},{"rel":"003_back.png","name":"003_back.png","ext":".png","group":"","bytes":7090,"w":1024,"h":1365,"fmt":"png","capSource":"sidecar","caption":"demochan, full body, back view, neutral A-pose","captionRel":"003_back.txt","trigger":"demochan","src":"../003_back.png","findings":[]},{"rel":"004_smile.png","name":"004_smile.png","ext":".png","group":"","bytes":7090,"w":1024,"h":1365,"fmt":"png","capSource":"sidecar","caption":"demochan, headshot, gentle smile","captionRel":"004_smile.txt","trigger":"demochan","src":"../004_smile.png","findings":[]},{"rel":"005_front.png","name":"005_front.png","ext":".png","group":"","bytes":7090,"w":1024,"h":1365,"fmt":"png","capSource":"sidecar","caption":"demochan, full body, front view, neutral A-pose","captionRel":"005_front.txt","trigger":"demochan","src":"../005_front.png","findings":["W002"]},{"rel":"006_think.png","name":"006_think.png","ext":".png","group":"","bytes":7090,"w":1024,"h":1365,"fmt":"png","capSource":"sidecar","caption":"demochar, headshot, thinking expression","captionRel":"006_think.txt","trigger":"demochar","src":"../006_think.png","findings":["W003"]},{"rel":"007_sit.png","name":"007_sit.png","ext":".png","group":"","bytes":7090,"w":1024,"h":1365,"fmt":"png","capSource":"sidecar","caption":"","captionRel":"007_sit.txt","trigger":null,"src":"../007_sit.png","findings":["W001"]},{"rel":"008_walk.png","name":"008_walk.png","ext":".png","group":"","bytes":7090,"w":1024,"h":1365,"fmt":"png","capSource":"sidecar","caption":"demochan, full body, walking pose","captionRel":"008_walk.txt","trigger":"demochan","src":"../008_walk.png","findings":[]},{"rel":"009_tiny.png","name":"009_tiny.png","ext":".png","group":"","bytes":762,"w":256,"h":256,"fmt":"png","capSource":"sidecar","caption":"demochan, headshot, surprised expression","captionRel":"009_tiny.txt","trigger":"demochan","src":"../009_tiny.png","findings":["W007"]},{"rel":"010 jump.png","name":"010 jump.png","ext":".png","group":"","bytes":7090,"w":1024,"h":1365,"fmt":"png","capSource":"sidecar","caption":"demochan, full body, jumping pose","captionRel":"010 jump.txt","trigger":"demochan","src":"../010%20jump.png","findings":["W005"]},{"rel":"011_face.png","name":"011_face.png","ext":".png","group":"","bytes":7090,"w":1024,"h":1365,"fmt":"png","capSource":"none","caption":null,"captionRel":null,"trigger":null,"src":"../011_face.png","findings":["E001"]},{"rel":"013_mislabeled.jpg","name":"013_mislabeled.jpg","ext":".jpg","group":"","bytes":7090,"w":1024,"h":1365,"fmt":"png","capSource":"sidecar","caption":"demochan, full body, three-quarter view, relaxed arms","captionRel":"013_mislabeled.txt","trigger":"demochan","src":"../013_mislabeled.jpg","findings":["W013"]},{"rel":"extra/012_full.png","name":"012_full.png","ext":".png","group":"extra","bytes":7090,"w":1024,"h":1365,"fmt":"png","capSource":"default","caption":"demochan, 3d cartoon character, plain white studio background, soft even lighting","captionRel":"extra","trigger":"demochan","src":"../extra/012_full.png","findings":["W004"]}],"findings":[{"id":"E001","sev":"error","title":"图片没有 caption","detail":"1 / 13 张图既没有同名 caption 文件，也没有 default_caption.txt 可以兜底。这些图在训练时要么被跳过，要么被当成无标注样本，模型学到的就是噪声。","items":["011_face.png"],"action":"为每张图补一个同名 .txt；若整套图共享同一段身份描述，再放一个 default_caption.txt 让逐图 .txt 只写变量。","count":1,"truncated":0,"kind":"image"},{"id":"W001","sev":"warn","title":"caption 文件是空的","detail":"1 张图的同名 caption 文件存在，但内容为空或只有空白字符。空文件比缺文件更隐蔽——文件计数对得上，训练时却是空的。","items":["007_sit.png"],"action":"补上内容，或删掉空文件让它落回 default_caption 兜底。","count":1,"truncated":0,"kind":"image"},{"id":"W002","sev":"warn","title":"逐图 caption 完全重复","detail":"1 组、共 2 张图的 caption 一字不差。如果这些图内容确实不同，说明变量没写进 caption——模型学不到它们的区别。例如：demochan, full body, front view, neutral a-pose","items":["001_front.png","005_front.png"],"action":"给重复的图补上各自的变量描述（视角 / 取景 / 表情 / 动作）。","count":2,"truncated":0,"kind":"image"},{"id":"W003","sev":"warn","title":"触发词不一致","detail":"主流触发词是 `demochan`（11 张里占 91%），但有 1 张的首词不是它（其它：`demochar`×1）。触发词不统一会让身份绑定被稀释——同一张脸被拆到多个 token 上。","items":["006_think.png"],"action":"把这些图的 caption 首词统一改成 `demochan`。","count":1,"truncated":0,"kind":"image"},{"id":"W004","sev":"warn","title":"只有 default_caption 兜底，没有逐图变量","detail":"1 张图继承的是 default_caption.txt，自己没有同名 .txt。default_caption 机制的正确用法是「身份块写一次 + 每张图写变量」；只有身份块意味着这些图在训练时彼此完全一样，模型无从区分它们的视角与表情。","items":["extra/012_full.png"],"action":"为这些图补各自的变量 .txt，只写会变的部分。","count":1,"truncated":0,"kind":"image"},{"id":"W005","sev":"warn","title":"文件名不规范","detail":"1 个文件名含空格、非 ASCII 字符或非常规符号。这类名字在跨平台拷贝、命令行参数、脚本拼接时最容易出问题，而且很多训练器的 sidecar 配对是按文件名严格匹配的。","items":["010 jump.png"],"action":"改为字母 / 数字 / 下划线 / 连字符，并让同名 .txt 跟着一起改。","count":1,"truncated":0,"kind":"image"},{"id":"W006","sev":"warn","title":"有 caption 文件但没有对应图片","detail":"1 个 caption 文件找不到同名图片。通常来自改名、删图或扩展名写错，是「账对不上」的第一信号。","items":["013_deleted.txt"],"action":"确认这些图是删了还是改名了：删了就一并删掉 caption，改名了就把 caption 一起改。","count":1,"truncated":0,"kind":"file"},{"id":"W007","sev":"warn","title":"分辨率偏小","detail":"1 张图的短边小于 512px（最小 256×256）。低分辨率图混在高分辨率集里，会在训练时被放大插值，等于给模型喂模糊样本。","items":["009_tiny.png"],"action":"把这些图剔出训练集，或先做一次超分再放回来。","count":1,"truncated":0,"kind":"image"},{"id":"W008","sev":"warn","title":"分辨率不统一","detail":"出现 2 种尺寸：1024×1365 · 12 张, 256×256 · 1 张。尺寸不统一本身不一定错（分桶训练就要求多样），但如果这不是你有意为之，多半是选图时混进了不同来源的图。","items":[],"action":"确认是有意分桶还是误混；误混则统一到目标分辨率。","count":0,"truncated":0,"kind":"none"},{"id":"W009","sev":"warn","title":"数据集规模偏离常见区间","detail":"只有 13 张图，低于常见的 15 张下限。角色 LoRA 的社区经验是 15–30 张精修即可，但过少时模型容易把构图和身份一起背下来（过拟合到姿势）。","items":[],"action":"再补几张不同视角/表情的图，优先补变化大的。","count":0,"truncated":0,"kind":"none"},{"id":"W013","sev":"warn","title":"扩展名与实际格式不符","detail":"1 个文件的扩展名和真实内容不是一回事（.jpg → png）。多数训练器按扩展名交给图像库解码，装了对应解码器时还能读，但换一台机器、换一个工具链就可能静默丢图——而「文件数」看起来还是对的。它也会让任何按扩展名取尺寸/生成缩略图的流程失效。","items":["013_mislabeled.jpg"],"action":"把扩展名改成实际格式；如果确实要 PNG，就先转码再入库。","count":1,"truncated":0,"kind":"image"},{"id":"W010","sev":"warn","title":"混入了系统杂物文件","detail":"1 个系统生成的文件（macOS 的 .DS_Store、Windows 的 Thumbs.db 等）躺在数据集里。它们不会被当图片读，但会把「文件数」这个指标弄脏，也容易被误打包进发布。","items":[".DS_Store"],"action":"删掉，或加进 .gitignore。","count":1,"truncated":0,"kind":"file"},{"id":"I001","sev":"info","title":"识别到的布局","detail":"图片既有平铺的、也有放在子目录里的（混合布局） / 检测到 1 个 default_caption.txt","items":[],"action":"","count":0,"truncated":0,"kind":"none"},{"id":"I002","sev":"info","title":"分组分布","detail":"extra 1 张 · （根目录）12 张","items":[],"action":"","count":0,"truncated":0,"kind":"none"},{"id":"I003","sev":"info","title":"触发词","detail":"推定触发词 `demochan`，覆盖 11 张中的 91%；其它：`demochar`×1","items":[],"action":"","count":0,"truncated":0,"kind":"none"}]}</script>
+<script>
+/* ============================================================================
+   lora-audit · 报告页脚本
+   ----------------------------------------------------------------------------
+   经典 <script>（不是 module）：file:// 下 ES Module 会被 CORS 拦掉。
+   不 fetch、不 XHR、不请求任何远程资源 —— 数据由构建期内联在
+   <script type="application/json" id="la-data"> 里。
+   用户数据一律走 textContent / createElement，不拼 innerHTML。
+   ========================================================================== */
+(function () {
+  "use strict";
+
+  var DATA_EL = document.getElementById("la-data");
+  if (!DATA_EL) return;
+  var D;
+  try {
+    D = JSON.parse(DATA_EL.textContent);
+  } catch (err) {
+    document.body.insertAdjacentHTML(
+      "afterbegin",
+      '<p style="padding:20px;color:#F87171">报告数据损坏，无法解析。</p>'
+    );
+    return;
+  }
+
+  /* 小工具：建元素，属性白名单式赋值，子节点只接字符串/节点 */
+  function el(tag, props, kids) {
+    var node = document.createElement(tag);
+    if (props) {
+      for (var k in props) {
+        if (!Object.prototype.hasOwnProperty.call(props, k)) continue;
+        var v = props[k];
+        if (v === null || v === undefined || v === false) continue;
+        if (k === "class") node.className = v;
+        else if (k === "text") node.textContent = v;
+        else if (k === "html") node.innerHTML = v; // 仅用于本文件内的固定标记
+        else if (k === "dataset") { for (var d in v) node.dataset[d] = v[d]; }
+        else if (v === true) node.setAttribute(k, "");
+        else node.setAttribute(k, v);
+      }
+    }
+    if (kids) {
+      for (var i = 0; i < kids.length; i++) {
+        var kid = kids[i];
+        if (kid === null || kid === undefined || kid === false) continue;
+        node.appendChild(typeof kid === "string" ? document.createTextNode(kid) : kid);
+      }
+    }
+    return node;
+  }
+
+  function q(sel) { return document.querySelector(sel); }
+
+  /* 把 `反引号` 段落渲染成 <code>；其余保持纯文本（不解析 HTML） */
+  function richText(text) {
+    var frag = document.createDocumentFragment();
+    var parts = String(text).split("`");
+    for (var i = 0; i < parts.length; i++) {
+      if (!parts[i]) continue;
+      if (i % 2 === 1) frag.appendChild(el("code", { text: parts[i] }));
+      else frag.appendChild(document.createTextNode(parts[i]));
+    }
+    return frag;
+  }
+
+  function humanBytes(n) {
+    if (n < 1024) return n + " B";
+    var u = ["KB", "MB", "GB"], v = n / 1024, i = 0;
+    while (v >= 1024 && i < u.length - 1) { v /= 1024; i++; }
+    return v.toFixed(1) + " " + u[i];
+  }
+
+  /* 图片地址在 Python 侧已经做过一次 URL 编码（quote），这里**绝不能再编码**：
+     再 encodeURI 一次会把 `010 jump.png` 的 %20 变成 %2520 → ERR_FILE_NOT_FOUND。
+     这个 bug verify 查不出来（它只解码一次，路径仍然可达），只有真浏览器能发现。 */
+  function srcUrl(src) { return src; }
+
+  /* ------------------------------------------------------------------ 头部 */
+  q('[data-bind="title"]').textContent = D.title;
+  q('[data-bind="root"]').textContent = D.dataset.root;
+  q('[data-bind="root"]').title = D.dataset.root;
+  q('[data-bind="generated"]').textContent = D.generated;
+  document.title = D.title;
+
+  /* -------------------------------------------------------------- 摘要芯片 */
+  var S = D.summary;
+  var chips = [];
+  function chip(text, value, cls) {
+    return el("span", { class: "la-chip" + (cls ? " " + cls : ""), role: "listitem" },
+      [text, el("b", { text: String(value) })]);
+  }
+  chips.push(chip("图片", S.images));
+  chips.push(chip("有逐图 caption", S.sidecar));
+  if (S.default) chips.push(chip("靠 default 兜底", S.default, "is-warn"));
+  if (S.none) chips.push(chip("无 caption", S.none, "is-error"));
+  if (S.groups) chips.push(chip("分组", S.groups));
+  chips.push(chip("体积", humanBytes(S.bytes)));
+  if (S.errors) chips.push(chip("错误", S.errors, "is-error"));
+  if (S.warnings) chips.push(chip("警告", S.warnings, "is-warn"));
+  // 豁免情况必须明示：豁免 ≠ 隐藏，用户在报告里要能一眼看到"我豁免了什么"
+  var ignoredIds = Object.keys(D.ignored || {});
+  if (ignoredIds.length) chips.push(chip("已豁免", ignoredIds.join(" "), "is-ok"));
+  if (!S.errors && !S.warnings) chips.push(chip("未发现问题", "✓", "is-ok"));
+  var chipBox = q('[data-bind="summary"]');
+  chips.forEach(function (c) { chipBox.appendChild(c); });
+
+  /* -------------------------------------------------------------- 检查结果 */
+  var findingsBox = q('[data-bind="findings"]');
+  var findings = D.findings || [];
+  // 只有 items 指向**图片**的规则才能拿来筛图。
+  // 杂物文件、孤儿 caption 的 items 是路径，不是图——拿它们筛图只会得到空网格。
+  var relevant = findings.filter(function (f) {
+    return f.kind === "image" && f.items && f.items.length;
+  });
+  var allClear = !findings.some(function (f) { return f.sev === "error" || f.sev === "warn"; });
+
+  q('[data-bind="finding-count"]').textContent = allClear
+    ? "未发现 caption 层面的问题"
+    : findings.length + " 条";
+
+  if (!findings.length) {
+    findingsBox.appendChild(el("div", { class: "la-finding is-ok" }, [
+      el("div", { class: "la-f-head" }, [
+        el("span", { class: "la-f-title", text: "没有发现问题" }),
+        el("span", { class: "la-f-detail", text: "每张图都有 caption，没有重复、没有触发词漂移、没有杂物文件。" })
+      ])
+    ]));
+  }
+
+  findings.forEach(function (f) {
+    var head = el("div", { class: "la-f-head" }, [
+      el("span", { class: "la-f-id", text: f.id }),
+      el("span", { class: "la-f-title", text: f.title }),
+      f.count ? el("span", { class: "la-f-count", text: f.count + " 张" + (f.truncated ? "（另 " + f.truncated + " 张未列出）" : "") }) : null
+    ]);
+    var kids = [head, el("p", { class: "la-f-detail" }, [richText(f.detail)])];
+    if (f.action) kids.push(el("p", { class: "la-f-action" }, [richText(f.action)]));
+    if (f.kind === "image" && f.items && f.items.length) {
+      kids.push(el("div", { class: "la-f-links" }, [
+        el("button", {
+          class: "alc-btn", type: "button", dataset: { focusFinding: f.id },
+          text: "只看这 " + f.items.length + " 张"
+        })
+      ]));
+    } else if (f.items && f.items.length) {
+      // 路径类条目（杂物文件 / 孤儿 caption / 清单里的死链）：给清单，不给筛图按钮
+      var list = el("ul", { class: "la-f-files" });
+      f.items.forEach(function (p) { list.appendChild(el("li", { text: p })); });
+      if (f.truncated) {
+        list.appendChild(el("li", { class: "la-f-more", text: "…还有 " + f.truncated + " 个" }));
+      }
+      kids.push(el("details", { class: "la-f-more-box" }, [
+        el("summary", { text: "列出这 " + f.items.length + " 个路径" }), list
+      ]));
+    }
+    findingsBox.appendChild(el("div", { class: "la-finding sev-" + f.sev }, kids));
+  });
+
+  /* ------------------------------------------------------------------ 筛选 */
+  var filtersBox = q('[data-bind="filters"]');
+  var state = { q: "", find: null };
+  var filterBtns = [];
+
+  function makeFilter(id, label, cls, count) {
+    var btn = el("button", {
+      class: "alc-btn" + (cls ? " " + cls : ""), type: "button",
+      "aria-pressed": "false", dataset: { filterId: id === null ? "" : id }
+    }, [
+      cls ? el("span", { class: "la-dot" }) : null,
+      label, count !== undefined ? " (" + count + ")" : null
+    ]);
+    filterBtns.push(btn);
+    filtersBox.appendChild(btn);
+    return btn;
+  }
+
+  makeFilter(null, "全部", null, D.images.length);
+  relevant.forEach(function (f) {
+    makeFilter(f.id, f.id + " " + f.title, "is-" + f.sev, f.items.length);
+  });
+
+  filtersBox.addEventListener("click", function (ev) {
+    var btn = ev.target.closest("[data-filter-id]");
+    if (!btn) return;
+    var id = btn.dataset.filterId || null;
+    state.find = (state.find === id) ? null : id;
+    syncFilters();
+    scheduleRender(true);
+  });
+
+  function syncFilters() {
+    filterBtns.forEach(function (b) {
+      var id = b.dataset.filterId || null;
+      b.setAttribute("aria-pressed", String(id === state.find));
+    });
+  }
+
+  findingsBox.addEventListener("click", function (ev) {
+    var btn = ev.target.closest("[data-focus-finding]");
+    if (!btn) return;
+    state.find = btn.dataset.focusFinding;
+    syncFilters();
+    scheduleRender(true);
+    document.getElementById("la-grid-h").scrollIntoView({ block: "start" });
+  });
+
+  /* ------------------------------------------------------------------ 搜索 */
+  var qInput = document.getElementById("la-q");
+  var searchTimer = null;
+  qInput.addEventListener("input", function () {
+    if (searchTimer) clearTimeout(searchTimer);
+    searchTimer = setTimeout(function () {
+      state.q = qInput.value.trim().toLowerCase();
+      scheduleRender(true);
+    }, 120);
+  });
+
+  /* ------------------------------------------------------------------ 网格 */
+  var grid = q('[data-bind="grid"]');
+  var emptyMsg = q('[data-bind="empty"]');
+  var gridCount = q('[data-bind="grid-count"]');
+  var CHUNK = 240;          // 小数据集一次渲染完；大数据集分批，避免首屏卡顿
+  var CHUNK_AT = 400;       // 超过这个数量才启用分批
+  var rendered = 0;
+  var matched = [];         // 命中筛选的图片下标（存下标，避免 indexOf 的 O(n²)）
+
+  function match(img) {
+    if (state.find && img.findings.indexOf(state.find) === -1) return false;
+    if (state.q) {
+      var hay = (img.rel + " " + (img.caption || "") + " " + (img.trigger || "")).toLowerCase();
+      if (hay.indexOf(state.q) === -1) return false;
+    }
+    return true;
+  }
+
+  function makeTile(idx) {
+    var img = D.images[idx];
+    var imgEl = el("img", {
+      src: srcUrl(img.src), alt: img.name, loading: "lazy", decoding: "async"
+    });
+    imgEl.addEventListener("error", function () {
+      imgEl.replaceWith(el("span", {
+        class: "la-tile-cap", text: "图片读不出来（已被移动或删除）"
+      }));
+    });
+    var badges = [];
+    if (img.capSource === "none") badges.push(el("span", { class: "la-badge none", text: "无 caption" }));
+    else if (img.capSource === "default") badges.push(el("span", { class: "la-badge w", text: "default 兜底" }));
+    img.findings.slice(0, 4).forEach(function (id) {
+      badges.push(el("span", {
+        class: "la-badge " + (id.charAt(0) === "E" ? "e" : "w"), text: id
+      }));
+    });
+    var capText = img.caption ? img.caption.trim() : "（没有 caption）";
+    return el("button", {
+      class: "la-tile", type: "button", dataset: { idx: String(idx) }, title: img.rel
+    }, [
+      el("span", { class: "la-frame" }, [imgEl]),
+      el("span", { class: "la-tile-body" }, [
+        el("span", { class: "la-tile-name", text: img.name }),
+        el("span", { class: "la-tile-cap", text: capText }),
+        badges.length ? el("span", { class: "la-tile-badges" }, badges) : null
+      ])
+    ]);
+  }
+
+  function appendChunk() {
+    var chunked = matched.length > CHUNK_AT;
+    var size = chunked ? CHUNK : matched.length;
+    var end = Math.min(rendered + size, matched.length);
+    var frag = document.createDocumentFragment();
+    for (var i = rendered; i < end; i++) frag.appendChild(makeTile(matched[i]));
+    grid.appendChild(frag);
+    rendered = end;
+    if (chunked) grid.appendChild(sentinel);   // 哨兵始终留在末尾
+    gridCount.textContent = "显示 " + rendered + " / 共 " + matched.length + " 张"
+      + (matched.length !== D.images.length ? "（已按筛选）" : "");
+  }
+
+  var sentinel = el("div", { class: "la-sentinel", "aria-hidden": "true" });
+  if ("IntersectionObserver" in window) {
+    new IntersectionObserver(function (entries) {
+      if (entries[0].isIntersecting && rendered < matched.length) appendChunk();
+    }, { rootMargin: "600px" }).observe(sentinel);
+  }
+
+  function scheduleRender(reset) {
+    if (reset) {
+      grid.textContent = "";
+      rendered = 0;
+    }
+    matched = [];
+    for (var i = 0; i < D.images.length; i++) {
+      if (match(D.images[i])) matched.push(i);
+    }
+    emptyMsg.hidden = matched.length > 0;
+    appendChunk();
+  }
+
+  /* ------------------------------------------------------------ 抽屉 / 灯箱 */
+  var drawer = document.getElementById("la-drawer");
+  var lb = document.getElementById("la-lightbox");
+  var lastFocus = null;
+
+  function kv(dt, dd, mono) {
+    return [el("dt", { text: dt }),
+            el("dd", { class: mono ? "alc-mono" : null, text: dd })];
+  }
+
+  function openDrawer(img) {
+    lastFocus = document.activeElement;
+    var body = q('[data-bind="drawer-body"]');
+    body.textContent = "";
+    q("#la-drawer-title").textContent = img.name;
+
+    var dl = el("dl", { class: "la-kv" });
+    kv("路径", img.rel, true).forEach(function (n) { dl.appendChild(n); });
+    kv("分组", img.group || "（根目录）").forEach(function (n) { dl.appendChild(n); });
+    kv("尺寸", (img.w && img.h) ? img.w + " × " + img.h : "读不出").forEach(function (n) { dl.appendChild(n); });
+    kv("体积", humanBytes(img.bytes)).forEach(function (n) { dl.appendChild(n); });
+    kv("caption 来源", img.capSource === "sidecar" ? "同名文件" :
+      (img.capSource === "default" ? "继承 default_caption" : "无")).forEach(function (n) { dl.appendChild(n); });
+    if (img.captionRel) kv("caption 文件", img.captionRel, true).forEach(function (n) { dl.appendChild(n); });
+    kv("触发词", img.trigger || "（没有）", true).forEach(function (n) { dl.appendChild(n); });
+    if (img.findings.length) kv("命中规则", img.findings.join(" · "), true).forEach(function (n) { dl.appendChild(n); });
+    body.appendChild(dl);
+
+    body.appendChild(el("div", {
+      class: "la-cap-box" + (img.caption ? "" : " is-empty"),
+      text: img.caption ? img.caption.trim() : "这张图没有 caption"
+    }));
+
+    var actions = el("div", { class: "la-drawer-actions" });
+    if (img.caption) {
+      var copyBtn = el("button", { class: "alc-btn", type: "button", text: "复制 caption" });
+      copyBtn.addEventListener("click", function () { copyText(img.caption, copyBtn); });
+      actions.appendChild(copyBtn);
+    }
+    var openBtn = el("button", { class: "alc-btn", type: "button", text: "看大图" });
+    openBtn.addEventListener("click", function () { openLightbox(img); });
+    actions.appendChild(openBtn);
+    body.appendChild(actions);
+
+    body.appendChild(el("div", { class: "la-preview" }, [
+      el("img", { src: srcUrl(img.src), alt: img.name, loading: "lazy" })
+    ]));
+
+    drawer.hidden = false;
+    var closeBtn = drawer.querySelector('[data-close="drawer"]');
+    if (closeBtn) closeBtn.focus();
+  }
+
+  function copyText(text, btn) {
+    var done = function (ok) {
+      var old = btn.textContent;
+      btn.textContent = ok ? "已复制 ✓" : "复制失败";
+      setTimeout(function () { btn.textContent = old; }, 1400);
+    };
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { done(true); },
+          function () { done(fallbackCopy(text)); });
+      } else {
+        done(fallbackCopy(text));
+      }
+    } catch (e) { done(fallbackCopy(text)); }
+  }
+
+  function fallbackCopy(text) {
+    try {
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      var ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return ok;
+    } catch (e) { return false; }
+  }
+
+  function openLightbox(img) {
+    q('[data-bind="lb-img"]').src = srcUrl(img.src);
+    q('[data-bind="lb-img"]').alt = img.name;
+    var cap = q('[data-bind="lb-cap"]');
+    cap.textContent = "";
+    cap.appendChild(el("div", { text: img.rel }));
+    if (img.caption) cap.appendChild(el("div", { text: img.caption.trim() }));
+    lb.hidden = false;
+    lb.querySelector('[data-close="lightbox"]').focus();
+  }
+
+  function closeAll() {
+    drawer.hidden = true;
+    lb.hidden = true;
+    q('[data-bind="lb-img"]').removeAttribute("src");
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+
+  grid.addEventListener("click", function (ev) {
+    var tile = ev.target.closest(".la-tile");
+    if (!tile) return;
+    var img = D.images[Number(tile.dataset.idx)];
+    if (img) openDrawer(img);
+  });
+
+  document.addEventListener("click", function (ev) {
+    var btn = ev.target.closest("[data-close]");
+    if (btn) closeAll();
+    if (ev.target === drawer || ev.target === lb) closeAll();
+  });
+
+  document.addEventListener("keydown", function (ev) {
+    if (ev.key === "Escape") closeAll();
+  });
+
+  /* ------------------------------------------------------------------ 主题 */
+  var themeBtn = document.getElementById("la-theme");
+  if (themeBtn) {
+    themeBtn.addEventListener("click", function () {
+      var cur = document.documentElement.getAttribute("data-alc-theme");
+      var next = cur === "light" ? "dark" : "light";
+      document.documentElement.setAttribute("data-alc-theme", next);
+      var meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute("content", next === "light" ? "#FFFFFF" : "#0D0F13");
+    });
+  }
+
+  /* 顶栏高多少，focus 的 scroll-margin 就留多少——不写死数字。
+     （踩过的坑：三处写死 top 值 → 2px 缝隙 + 导航被压住。所以这里算，不写死。） */
+  var topbar = document.querySelector(".alc-topbar");
+  function syncStickyHeight() {
+    if (topbar) {
+      document.documentElement.style.setProperty(
+        "--la-sticky-h", topbar.offsetHeight + "px");
+    }
+  }
+  syncStickyHeight();
+  window.addEventListener("resize", syncStickyHeight);
+
+  scheduleRender(true);
+  syncStickyHeight();
+})();
+
+</script>
+</body>
+</html>

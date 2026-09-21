@@ -12,8 +12,10 @@ _lora_audit/
 # 验收体验用的临时报告与清单
 _acceptance/
 
-# 示例数据集是生成的
-examples/demo-dataset/
+# 示例数据集与其报告随仓库分发（让人能直接点开一份真实产物）
+# 注意：示例数据是本仓库自制的合成图，不含任何第三方素材
+!examples/demo-dataset/
+!examples/demo-dataset/_lora_audit/
 
 # macOS / Windows 杂物（本工具会主动报这类文件）
 .DS_Store

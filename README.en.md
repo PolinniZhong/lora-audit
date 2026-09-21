@@ -24,6 +24,12 @@ file you double-click**.
 
 ![audit report](docs/screenshot.png)
 
+**[▶ Open a real report (bundled example, just double-click)](examples/demo-dataset/_lora_audit/report.html)**
+
+> That report is the real output of running the tool on `examples/demo-dataset/` (13 synthetic images).
+> Run it yourself: `lora-audit scan examples/demo-dataset`
+
+
 ## Quickstart
 
 ```bash
